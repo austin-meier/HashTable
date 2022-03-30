@@ -11,10 +11,10 @@ def test_should_create_table_fixed_size():
   assert HashTable(size=100) is not None
 
 def test_should_report_size():
-  assert len(HashTable(size=100)) == 100
+  assert len(HashTable(size=100)) == 0
 
-def test_should_create_empty_pairs():
-  assert HashTable(size=3)._pairs == [None, None, None]
+def test_should_create_empty_pair_slots():
+  assert HashTable(size=3)._slots == [None, None, None]
 
 def test_should_insert_key_value_pairs():
   # Given
@@ -39,7 +39,7 @@ def test_should_not_change_size_when_insert_key_value_pairs():
 
   # Then
   assert (10,10) in hash_table.pairs
-  assert len(hash_table) == 100
+  assert len(hash_table) == 1
 
 def test_should_not_contain_none_value_when_created():
   assert None not in HashTable(size=100).values
@@ -88,13 +88,13 @@ def test_should_get_value_with_default(hash_table):
 def test_should_delete_key_value_pair(hash_table):
   assert 'hola' in hash_table
   assert ('hola', 'hello') in hash_table.pairs
-  assert len(hash_table) == 100
+  assert len(hash_table) == 3
 
   del hash_table['hola']
 
   assert 'hola' not in hash_table
   assert ('hola', 'hello') not in hash_table.pairs
-  assert len(hash_table) == 100
+  assert len(hash_table) == 2
 
 def test_should_raise_key_error_when_deleting(hash_table):
   with pytest.raises(KeyError) as exception_info:
@@ -108,7 +108,7 @@ def test_should_update_key_value_pair(hash_table):
 
   assert hash_table['hola'] == 'updated'
   assert hash_table[98.6] == 37
-  assert len(hash_table) == 100
+  assert len(hash_table) == 3
 
 def test_should_return_pairs(hash_table):
   assert hash_table.pairs == {
@@ -152,3 +152,61 @@ def test_should_get_keys_of_empty_hash_table():
 def test_should_return_copy_of_keys(hash_table):
   assert hash_table.keys is not hash_table.keys
 
+def test_should_not_create_hash_table_with_zero_size():
+  with pytest.raises(ValueError):
+    HashTable(size=0)
+
+def test_should_not_create_hash_table_with_negative_size():
+  with pytest.raises(ValueError):
+    HashTable(size=-100)
+
+def test_should_report_length(hash_table):
+  assert len(hash_table) == 3
+
+def test_should_report_capacity_of_empty_hash_table():
+  assert HashTable(size=100).capacity == 100
+
+def test_should_report_capacity(hash_table):
+  assert hash_table.capacity == 100
+
+def test_should_convert_to_dict(hash_table):
+    dictionary = dict(hash_table.pairs)
+    assert set(dictionary.keys()) == hash_table.keys
+    assert set(dictionary.items()) == hash_table.pairs
+    assert list(dictionary.values()) == unordered(hash_table.values)
+
+def test_should_iterate_over_keys(hash_table):
+  for key in hash_table.keys:
+    assert key in ('hola', 98.6, False)
+
+def test_should_iterate_over_values(hash_table):
+  for value in hash_table.values:
+    assert value in ('hello', 37, True)
+
+def test_should_iterate_over_pairs(hash_table):
+  for key,value in hash_table.pairs:
+    assert key in hash_table.keys
+    assert value in hash_table.values
+
+def test_should_iterate_over_instance(hash_table):
+  for key in hash_table:
+    assert key in ('hola', 98.6, False)
+
+def test_should_use_dict_literal_for_str(hash_table):
+  assert str(hash_table) in {
+      "{'hola': 'hello', 98.6: 37, False: True}",
+      "{'hola': 'hello', False: True, 98.6: 37}",
+      "{98.6: 37, 'hola': 'hello', False: True}",
+      "{98.6: 37, False: True, 'hola': 'hello'}",
+      "{False: True, 'hola': 'hello', 98.6: 37}",
+      "{False: True, 98.6: 37, 'hola': 'hello'}",
+  }
+
+def test_should_create_hash_table_from_dict():
+  dictionary = {'hola':'hello', 98.6:37, False:True}
+  hash_table = HashTable.from_dict(dictionary)
+
+  assert hash_table.capacity == len(dictionary) * 10
+  assert hash_table.keys == set(dictionary.keys())
+  assert hash_table.pairs == set(dictionary.items())
+  assert unordered(hash_table.values) == list(dictionary.values())
